@@ -1,10 +1,14 @@
+import "./config/zod";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import { env } from "./config/env";
 import { logger } from "./config/logger";
-import { notFound, errorHandler } from "./middlewares/errorHandler";
+import { noEncontrado, manejadorErrores } from "./middlewares/errorHandler";
+import { limitadorGeneral } from "./middlewares/limitadores";
+import { authRutas } from "./modules/auth/auth.rutas";
+import { usuariosRutas } from "./modules/usuarios/usuarios.rutas";
 
 export const app = express();
 
@@ -23,14 +27,15 @@ app.use(
 
 app.get("/health", (_req, res) => {
   res.json({
-    status: "ok",
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
+    estado: "ok",
+    tiempoActivoSeg: Math.round(process.uptime()),
+    fecha: new Date().toISOString(),
   });
 });
 
-// Los módulos se montan aquí en las siguientes fases:
-// app.use('/api/v1/auth', authRouter);
+app.use("/api/v1", limitadorGeneral);
+app.use("/api/v1/auth", authRutas);
+app.use("/api/v1/usuarios", usuariosRutas);
 
-app.use(notFound);
-app.use(errorHandler);
+app.use(noEncontrado);
+app.use(manejadorErrores);
