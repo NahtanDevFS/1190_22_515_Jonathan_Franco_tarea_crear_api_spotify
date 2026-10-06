@@ -13,6 +13,11 @@ const schema = z.object({
   JWT_REFRESH_EXPIRES_DAYS: z.coerce.number().default(7),
   BCRYPT_ROUNDS: z.coerce.number().default(12),
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
+  // Solo los usa el seed (npm run seed)
+  ADMIN_CORREO: z.string().optional(),
+  ADMIN_NOMBRE_USUARIO: z.string().default("admin"),
+  ADMIN_CONTRASENA: z.string().optional(),
+  SEED_DATOS_DEMO: z.enum(["true", "false"]).default("false"),
 });
 
 export type Env = z.infer<typeof schema>;

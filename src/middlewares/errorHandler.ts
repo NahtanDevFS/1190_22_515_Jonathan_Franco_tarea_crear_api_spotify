@@ -41,6 +41,20 @@ export const manejadorErrores: ErrorRequestHandler = (
   if (err instanceof AppError) {
     return responder(res, err.status, err.codigo, err.message, err.detalles);
   }
+  // Respaldo ante condiciones de carrera: errores conocidos de Prisma
+  const codigoPrisma = (err as { code?: string }).code;
+  if (codigoPrisma === "P2025")
+    return responder(res, 404, "NO_ENCONTRADO", "Recurso no encontrado");
+  if (codigoPrisma === "P2002")
+    return responder(res, 409, "CONFLICTO", "El recurso ya existe");
+  if (codigoPrisma === "P2003")
+    return responder(
+      res,
+      409,
+      "CONFLICTO",
+      "El recurso referenciado no existe o está en uso",
+    );
+
   // Errores de express.json(): cuerpo mal formado o demasiado grande
   const tipo = (err as { type?: string }).type;
   if (tipo === "entity.parse.failed")

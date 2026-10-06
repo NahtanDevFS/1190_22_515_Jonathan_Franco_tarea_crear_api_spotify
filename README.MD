@@ -2,7 +2,7 @@
 
 API REST análoga a Spotify, construida con **Node.js y TypeScript**: gestión de clientes (usuarios), catálogo musical, playlists y biblioteca personal, con autenticación mediante **JWT**. Toda la API (rutas, campos JSON, mensajes y códigos de error) está en español.
 
-> **Estado:** Fase 2 completada (autenticación con JWT). Ver [Fases del proyecto](#fases-del-proyecto).
+> **Estado:** Fases 1 a 5 completadas (autenticación, catálogo, búsqueda, listas, favoritos, historial, Swagger, Docker y CI). Ver [Fases del proyecto](#fases-del-proyecto).
 
 ---
 
@@ -134,6 +134,7 @@ La aplicación **valida estas variables al arrancar** y se detiene con un mensaj
 | `npm run prisma:migrate` | Crea y aplica migraciones en desarrollo |
 | `npm run prisma:deploy` | Aplica migraciones en producción |
 | `npm run prisma:studio` | Interfaz visual de la base de datos |
+| `npm run seed` | Crea el administrador inicial (y, opcionalmente, datos de ejemplo) |
 
 ---
 
@@ -160,16 +161,24 @@ musicapi/
 │   │   │   ├── auth.esquemas.ts
 │   │   │   └── tokens.ts        # firma y verificación de JWT, hash de tokens
 │   │   ├── usuarios/            # perfil del usuario autenticado
-│   │   ├── canciones/           # (Fase 3)
-│   │   └── listas/              # (Fase 4)
+│   │   ├── artistas/            # CRUD (lectura autenticada, escritura ADMIN)
+│   │   ├── albumes/
+│   │   ├── canciones/
+│   │   ├── busqueda/            # búsqueda combinada
+│   │   ├── listas/              # listas de reproducción y sus canciones
+│   │   ├── favoritos/
+│   │   └── historial/
 │   ├── types/                   # extensión de tipos de Express (req.usuario)
-│   ├── utils/                   # AppError, asyncHandler
-│   ├── docs/                    # Especificación OpenAPI (Fase 5)
+│   ├── utils/                   # AppError, asyncHandler, paginación
+│   ├── scripts/seed.ts          # semilla: administrador y datos demo
+│   ├── docs/                    # Especificación OpenAPI y Swagger UI
 │   ├── app.ts                   # Configuración de Express
 │   └── server.ts                # Arranque y cierre ordenado
 ├── tests/
 │   └── helpers/bd-falsa.ts      # BD en memoria para pruebas sin PostgreSQL
+├── Dockerfile
 ├── docker-compose.yml
+├── .github/workflows/ci.yml
 ├── tsconfig.json
 ├── tsconfig.build.json
 ├── vitest.config.mts
@@ -212,21 +221,40 @@ Tablas: `usuarios`, `tokens_refresco`, `artistas`, `albumes`, `canciones`, `list
 
 Todos bajo el prefijo `/api/v1` (excepto `/health`).
 
-| Módulo | Método y ruta | Acceso | Fase |
-|---|---|---|---|
-| Auth | `POST /auth/registro` | Público | 2 |
-| Auth | `POST /auth/iniciar-sesion` | Público | 2 |
-| Auth | `POST /auth/refrescar` | Público (con token de refresco) | 2 |
-| Auth | `POST /auth/cerrar-sesion` | Autenticado | 2 |
-| Usuarios | `GET /usuarios/yo` | Autenticado | 2 |
-| Catálogo | `GET /artistas`, `/albumes`, `/canciones` (+ `/:id`) | Autenticado | 3 |
-| Catálogo | `POST`, `PATCH`, `DELETE` sobre los anteriores | Solo `ADMIN` | 3 |
-| Búsqueda | `GET /busqueda?q=&tipo=cancion\|artista\|album` | Autenticado | 3 |
-| Listas | `GET/POST /listas-reproduccion`, `GET/PATCH/DELETE /listas-reproduccion/:id` | Dueño (o pública solo lectura) | 4 |
-| Listas | `POST /listas-reproduccion/:id/canciones`, `DELETE /listas-reproduccion/:id/canciones/:cancionId` | Dueño | 4 |
-| Biblioteca | `GET /usuarios/yo/favoritos`, `PUT/DELETE /usuarios/yo/favoritos/:cancionId` | Autenticado | 4 |
-| Biblioteca | `GET /usuarios/yo/historial`, `POST /usuarios/yo/historial` | Autenticado | 4 |
-| Sistema | `GET /health` | Público | 1 |
+| Módulo | Método y ruta | Acceso |
+|---|---|---|
+| Auth | `POST /auth/registro` | Público |
+| Auth | `POST /auth/iniciar-sesion` | Público |
+| Auth | `POST /auth/refrescar` | Público (con token de refresco) |
+| Auth | `POST /auth/cerrar-sesion` | Autenticado |
+| Usuarios | `GET /usuarios/yo` | Autenticado |
+| Catálogo | `GET /artistas`, `/albumes`, `/canciones` (+ `/:id`) | Autenticado |
+| Catálogo | `POST`, `PATCH /:id`, `DELETE /:id` sobre los anteriores | Solo `ADMIN` |
+| Búsqueda | `GET /buscar?q=` (artistas, álbumes y canciones a la vez) | Autenticado |
+| Listas | `GET/POST /listas`, `GET/PATCH/DELETE /listas/:id` | Dueño (una lista pública es de solo lectura para otros) |
+| Listas | `POST /listas/:id/canciones`, `DELETE /listas/:id/canciones/:cancionId` | Dueño |
+| Favoritos | `GET /favoritos`, `PUT/DELETE /favoritos/:cancionId` | Autenticado (solo los propios) |
+| Historial | `GET/POST/DELETE /historial` | Autenticado (solo el propio) |
+| Documentación | `GET /api-docs` (Swagger UI), `GET /api-docs.yaml` | Público; desactivada en producción |
+| Sistema | `GET /health` | Público |
+
+**Listados:** aceptan `?pagina=1&limite=20` (máximo 100) y responden `{ datos, paginacion: { pagina, limite, total, totalPaginas } }`. Los de catálogo aceptan además `q` (texto) y filtros por `artistaId` / `albumId`.
+
+**Privacidad de listas:** una lista privada de otro usuario responde `404` (no se revela que existe); una pública responde `403` si se intenta modificar.
+
+### Administrador inicial (seed)
+
+El registro público siempre crea usuarios `USUARIO`. Para tener un `ADMIN`, define `ADMIN_CORREO`, `ADMIN_NOMBRE_USUARIO` y `ADMIN_CONTRASENA` en `.env` (ver `.env.example`) y ejecuta:
+
+```bash
+npm run seed
+```
+
+Es idempotente: si el usuario ya existe solo se asegura su rol `ADMIN`, sin cambiar su contraseña. Con `SEED_DATOS_DEMO=true` crea además un artista, un álbum y tres canciones de ejemplo (ignorado en producción).
+
+### Documentación interactiva
+
+Con el servidor en marcha: <http://localhost:3000/api-docs>. Para probar rutas protegidas, inicia sesión, copia el `tokenAcceso` y pulsa **Authorize**.
 
 ---
 
@@ -301,7 +329,12 @@ Todos los errores tienen la misma forma:
 | 401 | `CREDENCIALES_INVALIDAS` | Correo o contraseña incorrectos |
 | 403 | `PROHIBIDO` | El rol no tiene permiso |
 | 404 | `NO_ENCONTRADO` / `USUARIO_NO_ENCONTRADO` | Ruta o recurso inexistente |
+| 400 | `ALBUM_NO_COINCIDE` | El álbum no pertenece al artista de la canción |
+| 404 | `ARTISTA_NO_ENCONTRADO` / `ALBUM_NO_ENCONTRADO` / `CANCION_NO_ENCONTRADA` / `LISTA_NO_ENCONTRADA` | Recurso inexistente (o lista privada ajena) |
+| 404 | `CANCION_NO_EN_LISTA` / `FAVORITO_NO_ENCONTRADO` | Se intenta quitar algo que no estaba |
 | 409 | `USUARIO_EXISTENTE` | Correo o nombre de usuario ya registrados |
+| 409 | `CANCION_DUPLICADA` | La canción ya está en la lista |
+| 409 | `CONFLICTO` | Respaldo ante condiciones de carrera en la base de datos |
 | 413 | `CUERPO_DEMASIADO_GRANDE` | El cuerpo supera 100 kb |
 | 429 | `DEMASIADAS_PETICIONES` | Límite de peticiones excedido |
 | 500 | `ERROR_INTERNO` | Error no controlado (sin detalles internos) |
@@ -314,7 +347,7 @@ Todos los errores tienen la misma forma:
 npm test
 ```
 
-Las pruebas de autenticación se ejecutan **sin PostgreSQL**: los repositorios se sustituyen por una base de datos en memoria (`tests/helpers/bd-falsa.ts`) que imita su comportamiento, de modo que se prueba la lógica real de servicios, rutas, validación y JWT. Cubren, entre otros casos:
+Las pruebas se ejecutan **sin PostgreSQL**: los repositorios se sustituyen por una base de datos en memoria (`tests/helpers/bd-falsa.ts`) que imita su comportamiento, de modo que se prueba la lógica real de servicios, rutas, validación y JWT. Cubren, entre otros casos:
 
 - Registro, inicio de sesión y perfil.
 - Hash de contraseñas y de refresh tokens en la base de datos.
@@ -323,6 +356,26 @@ Las pruebas de autenticación se ejecutan **sin PostgreSQL**: los repositorios s
 - Rotación y detección de reutilización de refresh tokens.
 - Tokens con firma falsa, expirados, con algoritmo `none` o de tipo equivocado.
 - Control de acceso por rol y límite de peticiones.
+- Catálogo: solo `ADMIN` escribe, validación estricta, 404 y coherencia álbum/artista.
+- Búsqueda y paginación (con tope de 100).
+- Listas: privadas ajenas ocultas (404), públicas ajenas de solo lectura (403), canciones duplicadas (409).
+- Favoritos e historial siempre ligados al usuario del token.
+- La especificación OpenAPI y Swagger UI se sirven correctamente.
+
+---
+
+## Docker e integración continua
+
+**Imagen de la API** (multi-etapa, usuario sin privilegios, `HEALTHCHECK` sobre `/health`):
+
+```bash
+docker build -t musicapi .
+docker run --rm -p 3000:3000 --env-file .env -e DATABASE_URL="postgresql://music:music@host.docker.internal:5433/musicapi?schema=public" musicapi
+```
+
+Las migraciones no se aplican al arrancar; en despliegue se ejecuta `npx prisma migrate deploy` como paso aparte.
+
+**CI** (`.github/workflows/ci.yml`, GitHub Actions): en cada push y pull request ejecuta `typecheck`, `lint`, pruebas, `build` y `npm audit --omit=dev` (falla con vulnerabilidades altas), y comprueba que la imagen Docker se construye.
 
 ---
 
@@ -421,9 +474,9 @@ Esta sección resume las decisiones de diseño que guían el desarrollo y por qu
 
 - [x] **Fase 1:** Setup del proyecto en TypeScript, estructura, esquema de BD en español, Docker, configuración, manejo de errores, pruebas base
 - [x] **Fase 2:** Autenticación con JWT y refresh tokens (registro, inicio de sesión, rotación, cierre de sesión, roles)
-- [ ] **Fase 3:** Catálogo (artistas, álbumes, canciones), búsqueda y script de semilla para el administrador
-- [ ] **Fase 4:** Playlists y biblioteca (favoritos e historial)
-- [ ] **Fase 5:** Documentación Swagger, pruebas completas, Dockerfile y CI
+- [x] **Fase 3:** Catálogo (artistas, álbumes, canciones), búsqueda y script de semilla para el administrador
+- [x] **Fase 4:** Playlists y biblioteca (favoritos e historial)
+- [x] **Fase 5:** Documentación Swagger, pruebas completas, Dockerfile y CI
 
 ---
 
