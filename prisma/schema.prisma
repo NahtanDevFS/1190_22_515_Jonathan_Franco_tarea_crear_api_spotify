@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  USUARIO
+  ADMIN
+
+  @@map("rol")
+}
+
+model Usuario {
+  id             String   @id @default(uuid())
+  correo         String   @unique
+  nombreUsuario  String   @unique @map("nombre_usuario")
+  contrasenaHash String   @map("contrasena_hash")
+  rol            Rol      @default(USUARIO)
+  creadoEn       DateTime @default(now()) @map("creado_en")
+  actualizadoEn  DateTime @updatedAt @map("actualizado_en")
+
+  tokensRefresco TokenRefresco[]
+  listas         ListaReproduccion[]
+  favoritos      Favorito[]
+  historial      HistorialReproduccion[]
+
+  @@map("usuarios")
+}
+
+model TokenRefresco {
+  id         String    @id @default(uuid())
+  hashToken  String    @unique @map("hash_token")
+  usuarioId  String    @map("usuario_id")
+  usuario    Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  expiraEn   DateTime  @map("expira_en")
+  revocadoEn DateTime? @map("revocado_en")
+  creadoEn   DateTime  @default(now()) @map("creado_en")
+
+  @@index([usuarioId])
+  @@map("tokens_refresco")
+}
+
+model Artista {
+  id        String    @id @default(uuid())
+  nombre    String
+  biografia String?
+  albumes   Album[]
+  canciones Cancion[]
+
+  @@index([nombre])
+  @@map("artistas")
+}
+
+model Album {
+  id               String    @id @default(uuid())
+  titulo           String
+  fechaLanzamiento DateTime? @map("fecha_lanzamiento")
+  artistaId        String    @map("artista_id")
+  artista          Artista   @relation(fields: [artistaId], references: [id], onDelete: Cascade)
+  canciones        Cancion[]
+
+  @@index([titulo])
+  @@index([artistaId])
+  @@map("albumes")
+}
+
+model Cancion {
+  id          String  @id @default(uuid())
+  titulo      String
+  duracionSeg Int     @map("duracion_seg")
+  albumId     String? @map("album_id")
+  album       Album?  @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  artistaId   String  @map("artista_id")
+  artista     Artista @relation(fields: [artistaId], references: [id], onDelete: Cascade)
+
+  listas    ListaCancion[]
+  favoritos Favorito[]
+  historial HistorialReproduccion[]
+
+  @@index([titulo])
+  @@index([artistaId])
+  @@map("canciones")
+}
+
+model ListaReproduccion {
+  id            String         @id @default(uuid())
+  nombre        String
+  esPublica     Boolean        @default(false) @map("es_publica")
+  propietarioId String         @map("propietario_id")
+  propietario   Usuario        @relation(fields: [propietarioId], references: [id], onDelete: Cascade)
+  canciones     ListaCancion[]
+  creadoEn      DateTime       @default(now()) @map("creado_en")
+
+  @@index([propietarioId])
+  @@map("listas_reproduccion")
+}
+
+model ListaCancion {
+  listaId    String            @map("lista_id")
+  cancionId  String            @map("cancion_id")
+  posicion   Int
+  agregadaEn DateTime          @default(now()) @map("agregada_en")
+  lista      ListaReproduccion @relation(fields: [listaId], references: [id], onDelete: Cascade)
+  cancion    Cancion           @relation(fields: [cancionId], references: [id], onDelete: Cascade)
+
+  @@id([listaId, cancionId])
+  @@map("lista_canciones")
+}
+
+model Favorito {
+  usuarioId String  @map("usuario_id")
+  cancionId String  @map("cancion_id")
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cancion   Cancion @relation(fields: [cancionId], references: [id], onDelete: Cascade)
+
+  @@id([usuarioId, cancionId])
+  @@map("favoritos")
+}
+
+model HistorialReproduccion {
+  id            String   @id @default(uuid())
+  usuarioId     String   @map("usuario_id")
+  cancionId     String   @map("cancion_id")
+  reproducidaEn DateTime @default(now()) @map("reproducida_en")
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cancion       Cancion  @relation(fields: [cancionId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, reproducidaEn])
+  @@map("historial_reproduccion")
+}
