@@ -370,7 +370,7 @@ Las pruebas se ejecutan **sin PostgreSQL**: los repositorios se sustituyen por u
 
 ```bash
 docker build -t musicapi .
-docker run --rm -p 3000:3000 --env-file .env -e DATABASE_URL="postgresql://music:music@host.docker.internal:5433/musicapi?schema=public" musicapi
+docker run --rm -p 3000:3000 --env-file .env -e NODE_ENV=production -e DATABASE_URL="postgresql://music:music@host.docker.internal:5433/musicapi?schema=public" musicapi
 ```
 
 Las migraciones no se aplican al arrancar; en despliegue se ejecuta `npx prisma migrate deploy` como paso aparte.
