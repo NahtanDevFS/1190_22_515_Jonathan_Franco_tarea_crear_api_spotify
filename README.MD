@@ -81,6 +81,74 @@ $sesion = Invoke-RestMethod -Method Post -Uri "$base/auth/registro" -ContentType
 Invoke-RestMethod "$base/usuarios/yo" -Headers @{ Authorization = "Bearer $($sesion.tokenAcceso)" }
 ```
 
+## Capturas
+
+Llamadas reales a la API en funcionamiento. Los tokens aparecen recortados.
+
+Documentación interactiva con Swagger en /api-docs.
+
+![Documentación interactiva con Swagger en /api-docs.](docs/capturas/00-swagger.png)
+
+Comprobación del servicio en /health.
+
+![Comprobación del servicio en /health.](docs/capturas/15-health.png)
+
+Registro de un usuario: siempre se crea con rol USUARIO.
+
+![Registro de un usuario: siempre se crea con rol USUARIO.](docs/capturas/02-registro.png)
+
+Inicio de sesión del administrador, que devuelve el token de acceso y el de refresco.
+
+![Inicio de sesión del administrador, que devuelve el token de acceso y el de refresco.](docs/capturas/01-login-admin.png)
+
+Intento de registrarse con rol ADMIN: se rechaza con 400.
+
+![Intento de registrarse con rol ADMIN: se rechaza con 400.](docs/capturas/03-registro-rol-admin.png)
+
+Ruta protegida sin token: 401.
+
+![Ruta protegida sin token: 401.](docs/capturas/04-sin-token.png)
+
+Listado paginado de canciones.
+
+![Listado paginado de canciones.](docs/capturas/05-listar-canciones.png)
+
+Búsqueda combinada de artistas, álbumes y canciones.
+
+![Búsqueda combinada de artistas, álbumes y canciones.](docs/capturas/06-buscar.png)
+
+Un USUARIO intenta crear un artista: 403.
+
+![Un USUARIO intenta crear un artista: 403.](docs/capturas/07-usuario-crea-artista.png)
+
+Un ADMIN crea un artista: 201.
+
+![Un ADMIN crea un artista: 201.](docs/capturas/08-admin-crea-artista.png)
+
+Creación de una lista de reproducción.
+
+![Creación de una lista de reproducción.](docs/capturas/09-crear-lista.png)
+
+Se agrega una canción a la lista.
+
+![Se agrega una canción a la lista.](docs/capturas/10-agregar-cancion.png)
+
+Agregar la misma canción otra vez: 409.
+
+![Agregar la misma canción otra vez: 409.](docs/capturas/11-cancion-duplicada.png)
+
+Otro usuario pide una lista privada ajena: 404, como si no existiera.
+
+![Otro usuario pide una lista privada ajena: 404, como si no existiera.](docs/capturas/12-lista-privada-ajena.png)
+
+Marcar una canción como favorita.
+
+![Marcar una canción como favorita.](docs/capturas/13-favorito.png)
+
+Registrar una reproducción en el historial.
+
+![Registrar una reproducción en el historial.](docs/capturas/14-historial.png)
+
 ## Propuesta de mejores prácticas
 
 Esto es lo que se siguió y por qué. En el documento de la tarea está explicado con más detalle.
