@@ -22,7 +22,7 @@ Necesitas Node.js 20 o más y Docker Desktop.
 
 ```bash
 npm install
-cp .env.example .env        # en PowerShell: Copy-Item .env.example .env
+cp .env.example .env
 docker compose up -d --wait
 npm run prisma:generate
 npx prisma migrate dev --name init
@@ -50,7 +50,7 @@ En la raíz hay una carpeta `prisma` con el esquema y las migraciones, una carpe
 
 ## Base de datos
 
-Son nueve tablas: `usuarios`, `tokens_refresco`, `artistas`, `albumes`, `canciones`, `listas_reproduccion`, `lista_canciones`, `favoritos` e `historial_reproduccion`. Los modelos van en español y en singular, las tablas en plural con guion bajo, y los campos mantienen la misma idea. El esquema completo está en `prisma/schema.prisma`.
+Son nueve tablas: `usuarios`, `tokens_refresco`, `artistas`, `albumes`, `canciones`, `listas_reproduccion`, `lista_canciones`, `favoritos` e `historial_reproduccion`. Las tablas van en español con guion bajo, y los campos mantienen la misma idea. El esquema completo está en `prisma/schema.prisma`.
 
 ## Rutas
 
@@ -84,9 +84,9 @@ Los listados aceptan `?pagina=1&limite=20`, con un máximo de 100 por página. L
 
 ## Autenticación
 
-Al registrarse o iniciar sesión se reciben dos tokens. El de acceso dura 15 minutos y se manda en la cabecera `Authorization: Bearer <token>`. El de refresco dura 7 días y solo sirve en `/auth/refrescar`, que lo cambia por un par nuevo e invalida el anterior. Si alguien usa un token de refresco que ya se usó, se cierran todas las sesiones de ese usuario. Los usuarios nuevos siempre son `USUARIO`, el único `ADMIN` sale del seed.
+Al registrarse o iniciar sesión se reciben dos tokens. El de acceso dura 15 minutos y se manda en la cabecera `Authorization: Bearer <token>`, el de refresco dura 7 días y solo sirve en `/auth/refrescar`, que lo cambia por un par nuevo e invalida el anterior, si alguien usa un token de refresco que ya se usó, se cierran todas las sesiones de ese usuario. Los usuarios nuevos siempre son `USUARIO`, el único `ADMIN` sale del seed.
 
-Un ejemplo rápido en PowerShell:
+Un ejemplo en PowerShell:
 
 ```powershell
 $base = "http://localhost:3000/api/v1"
