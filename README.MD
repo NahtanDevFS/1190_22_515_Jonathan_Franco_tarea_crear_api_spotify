@@ -64,20 +64,20 @@ POST   /auth/cerrar-sesion
 
 GET    /usuarios/yo
 
-GET    /artistas  /albumes  /canciones      también /:id
-POST   /artistas  /albumes  /canciones      solo ADMIN
-PATCH  y DELETE sobre /:id                  solo ADMIN
+GET    /artistas /albumes /canciones también /:id
+POST   /artistas  /albumes  /canciones solo ADMIN
+PATCH  y DELETE sobre /:id solo ADMIN
 GET    /buscar?q=
 
-GET    /listas          POST /listas
-GET    /listas/:id      PATCH /listas/:id      DELETE /listas/:id
+GET    /listas POST /listas
+GET    /listas/:id PATCH /listas/:id DELETE /listas/:id
 POST   /listas/:id/canciones
 DELETE /listas/:id/canciones/:cancionId
 
 GET    /favoritos
-PUT    /favoritos/:id   DELETE /favoritos/:id
+PUT    /favoritos/:id DELETE /favoritos/:id
 
-GET    /historial       POST /historial       DELETE /historial
+GET    /historial POST /historial DELETE /historial
 ```
 
 Los listados aceptan `?pagina=1&limite=20`, con un máximo de 100 por página. Los errores siempre tienen la forma `{ "error": { "codigo", "mensaje", "detalles" } }`.
