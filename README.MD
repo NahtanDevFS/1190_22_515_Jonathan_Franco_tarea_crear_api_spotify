@@ -80,11 +80,11 @@ PUT    /favoritos/:id DELETE /favoritos/:id
 GET    /historial POST /historial DELETE /historial
 ```
 
-Los listados aceptan `?pagina=1&limite=20`, con un máximo de 100 por página. Los errores siempre tienen la forma `{ "error": { "codigo", "mensaje", "detalles" } }`.
+Los listados aceptan `?pagina=1&limite=20`, con un máximo de 100 por página, los errores siempre tienen la forma `{ "error": { "codigo", "mensaje", "detalles" } }`.
 
 ## Autenticación
 
-Al registrarse o iniciar sesión se reciben dos tokens. El de acceso dura 15 minutos y se manda en la cabecera `Authorization: Bearer <token>`, el de refresco dura 7 días y solo sirve en `/auth/refrescar`, que lo cambia por un par nuevo e invalida el anterior, si alguien usa un token de refresco que ya se usó, se cierran todas las sesiones de ese usuario. Los usuarios nuevos siempre son `USUARIO`, el único `ADMIN` sale del seed.
+Al registrarse o iniciar sesión se reciben dos tokens, el de acceso dura 15 minutos y se manda en la cabecera `Authorization: Bearer <token>`, el de refresco dura 7 días y solo sirve en `/auth/refrescar`, que lo cambia por un par nuevo e invalida el anterior, si alguien usa un token de refresco que ya se usó, se cierran todas las sesiones de ese usuario, los usuarios nuevos siempre son `USUARIO`, el único `ADMIN` sale del seed.
 
 Un ejemplo en PowerShell:
 
