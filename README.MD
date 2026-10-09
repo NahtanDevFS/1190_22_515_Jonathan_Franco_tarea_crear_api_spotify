@@ -1,6 +1,6 @@
 # MusicAPI
 
-API parecida a Spotify hecha con Node.js, TypeScript, Express, PostgreSQL y Prisma. Los clientes se registran, inician sesión con JWT y pueden ver el catálogo, buscar música y manejar sus listas, favoritos e historial. Todo está en español, desde las rutas hasta la base de datos.
+API parecida a Spotify hecha con Node.js, TypeScript, Express, PostgreSQL y Prisma, donde los clientes se registran, inician sesión con JWT y pueden ver el catálogo, buscar música y manejar sus listas, favoritos e historial.
 
 ## Propuesta de mejores prácticas
 
